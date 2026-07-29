@@ -1,0 +1,38 @@
+name: Build Real Android APK
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go Engine
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Go Engine Binary
+        run: |
+          mkdir -p app/src/main/assets
+          GOOS=android GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o app/src/main/assets/PhantomCore .
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android APK with Gradle
+        run: |
+          gradle assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fhantom-APK
+          path: "app/build/outputs/apk/debug/app-debug.apk"
